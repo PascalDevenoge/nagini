@@ -509,6 +509,12 @@ def dict_pred(d: object) -> bool:
 def isNaN(f: float) -> bool:
     pass
 
+def seqProduct(i: int, t: Tuple[int, ...]) -> int:
+    pass
+
+def filterSeq(i: int, s: Tuple[int, ...], drop: Tuple[int, ...]) -> PSeq[int]:
+    pass
+
 __all__ = [
         'Requires',
         'Ensures',
@@ -562,5 +568,7 @@ __all__ = [
         'ToMS',
         'MaySet',
         'MayCreate',
-        'isNaN'
+        'isNaN',
+        'seqProduct',
+        'filterSeq'
         ]

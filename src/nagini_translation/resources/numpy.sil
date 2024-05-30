@@ -1,0 +1,70 @@
+domain Nat {
+    function zero(): Nat
+    function S(n: Nat): Nat
+    function fromInt(i: Int): Nat
+
+    axiom zero {
+      fromInt(0) == zero()
+    }
+
+    axiom positive {
+      forall i: Int ::
+        i > 0 ==> fromInt(i) == S(fromInt(i - 1))
+    }
+}
+
+
+domain _NumpyHelper {
+  function __seqProduct(n: Nat, s: Seq[Int]): Int
+  function __filterSeq(n: Nat, i: Int, s: Seq[Int], drop: Seq[Int]): Seq[Int]
+
+  axiom seqProduct {
+    forall n: Nat, s: Seq[Int] :: {__seqProduct(S(n), s)}
+      __seqProduct(S(n), s) == s[0] * __seqProduct(n, s[1..])
+  }
+
+  axiom emptySeqProduct {
+    forall n: Nat, s: Seq[Int] :: {__seqProduct(n, s)}
+      |s| == 0 ==> __seqProduct(n, s) == 1 
+  }
+
+  axiom filterSeq {
+    forall n: Nat, i: Int, s: Seq[Int], drop: Seq[Int] :: {__filterSeq(S(n), i, s, drop)}
+      (i == drop[0] ==> __filterSeq(S(n), i, s, drop) == __filterSeq(n, i + 1, s[1..], drop[1..])) &&
+      (i != drop[0] ==> __filterSeq(S(n), i, s, drop) == Seq(s[0]) ++ __filterSeq(n, i + 1, s[1..], drop))
+  }
+
+  axiom baseFilterSeq {
+    forall n: Nat, i: Int, s: Seq[Int], drop: Seq[Int] :: {__filterSeq(n, i, s, drop)}
+      (|drop| == 0 ==> __filterSeq(n, i, s, drop) == s) &&
+      (|s| == 0 ==> __filterSeq(n, i, s, drop) == Seq[Int]())
+  }
+}
+
+
+function filterSeq(i: Int, s: Ref, drop: Ref): Ref
+  decreases _
+  requires forall id: Int :: id >= 0 && id < tuple___len__(s) ==> issubtype(tuple_arg(typeof(s), id), int())
+  requires forall id: Int :: id >= 0 && id < tuple___len__(drop) ==> issubtype(tuple_arg(typeof(drop), id), int())
+  ensures result == intSeqToPSeq(__filterSeq(fromInt(i), 0, intTupleToSeq(s), intTupleToSeq(drop)))
+
+function seqProduct(i: Int, t: Ref): Int
+  decreases _
+  requires forall id: Int :: id >= 0 && id < tuple___len__(t) ==> issubtype(tuple_arg(typeof(t), id), int())
+  ensures result == __seqProduct(fromInt(i), intTupleToSeq(t))
+
+
+function boxIntSeq(s: Seq[Int]): Seq[Ref]
+  decreases _
+  ensures |result| == |s|
+  ensures forall i: Int :: {result[i]} i >= 0 && i < |s| ==> result[i] == __prim__int___box__(s[i])
+
+function intTupleToSeq(t: Ref): Seq[Int]
+  decreases _
+  requires forall id: Int :: id >= 0 && id < tuple___len__(t) ==> issubtype(tuple_arg(typeof(t), id), int())
+  ensures |result| == tuple___len__(t)
+  ensures forall i: Int :: {result[i]} i >= 0 && i < tuple___len__(t) ==> result[i] == int___unbox__(tuple___getitem__(t, i))
+
+function intSeqToPSeq(s: Seq[Int]): Ref
+  decreases _
+  ensures result == PSeq___create__(boxIntSeq(s), int())

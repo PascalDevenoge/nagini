@@ -975,6 +975,16 @@
             "args": ["list"],
             "type": "__prim__int",
             "requires": ["__seq_ref_to_seq_int", "int___unbox__", "__prim__int___box__", "list___getitem__"]
+        },
+        "seqProduct": {
+            "args": ["__prim__int", "tuple"],
+            "type": "__prim__int",
+            "requires": ["intTupleToSeq", "tuple___len__", "tuple___getitem__", "int___unbox__"]
+        },
+        "filterSeq": {
+            "args": ["__prim__int", "Tuple", "Tuple"],
+            "type": "PSeq",
+            "requires": ["intSeqToPSeq", "intTupleToSeq", "PSeq___create__", "boxIntSeq"]
         }
     },
     "methods": {
