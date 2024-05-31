@@ -982,9 +982,9 @@
             "requires": ["intTupleToSeq", "tuple___len__", "tuple___getitem__", "int___unbox__"]
         },
         "filterSeq": {
-            "args": ["__prim__int", "Tuple", "Tuple"],
+            "args": ["__prim__int", "tuple", "tuple"],
             "type": "PSeq",
-            "requires": ["intSeqToPSeq", "intTupleToSeq", "PSeq___create__", "boxIntSeq"]
+            "requires": ["PSeq___create__", "tuple___sil_seq__", "boxIntSeq", "__prim__int___box__"]
         }
     },
     "methods": {

@@ -512,7 +512,7 @@ def isNaN(f: float) -> bool:
 def seqProduct(i: int, t: Tuple[int, ...]) -> int:
     pass
 
-def filterSeq(i: int, s: Tuple[int, ...], drop: Tuple[int, ...]) -> PSeq[int]:
+def filterSeq(i: int, s: Tuple[T, ...], drop: Tuple[int, ...]) -> PSeq[T]:
     pass
 
 __all__ = [
@@ -570,5 +570,5 @@ __all__ = [
         'MayCreate',
         'isNaN',
         'seqProduct',
-        'filterSeq'
+        'filterSeq',
         ]
