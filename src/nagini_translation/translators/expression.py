@@ -458,6 +458,10 @@ class ExpressionTranslator(CommonTranslator):
         target_type = self.get_type(node.value, ctx)
         target_stmt, target = self.translate_expr(node.value, ctx,
                                                   target_type=self.viper.Ref)
+        
+        if isinstance(node.slice, ast.ExtSlice):
+            return self._translate_extslice_subscript(node, target, target_type, target_stmt, ctx)
+
         if not isinstance(node.slice, ast.Index):
             return self._translate_slice_subscript(node, target, target_type,
                                                    target_stmt, ctx)
@@ -470,6 +474,38 @@ class ExpressionTranslator(CommonTranslator):
         call_stmt, call = self.get_func_or_method_call(target_type, '__getitem__', args,
                                                        arg_types, node, ctx)
         return target_stmt + index_stmt + call_stmt, call
+
+    def _translate_extslice_subscript(self, node: ast.ExtSlice, target: Expr, target_type: PythonType, target_stmt: List[Stmt], ctx: Context) -> StmtsAndExpr:
+        slice_class = ctx.module.global_module.classes['slice']
+
+        args_expr = []
+        args_types = []
+        args_stmt = target_stmt
+        
+        for dim in node.slice.dims:
+            if isinstance(dim, ast.Index):
+                index_stmt, index = self.translate_expr(dim.value, ctx, target_type=self.viper.Ref)
+                index_type = self.get_type(dim.value, ctx)
+                args_expr.append(index)
+                args_stmt += index_stmt
+                args_types.append(index_type)
+            else:
+                slice_class = ctx.module.global_module.classes['slice']
+                null = self.viper.NullLit(self.no_position(ctx), self.no_info(ctx))
+                start = stop = null
+                start_stmt = stop_stmt = []
+                if dim.lower:
+                    start_stmt, start = self.translate_expr(dim.lower, ctx)
+                if dim.upper:
+                    stop_stmt, stop = self.translate_expr(dim.upper, ctx)
+                slice = self.get_function_call(slice_class, '__create__', [start, stop], [None, None], dim, ctx)
+                args_expr.append(slice)
+                args_stmt += start_stmt
+                args_stmt += stop_stmt
+                args_types.append(slice_class)
+        tuple = self.create_tuple(args_expr, args_types, node, ctx)
+        call_stmt, call = self.get_func_or_method_call(target_type, '__getitem__', [target, tuple], [target_type, None], node, ctx)
+        return args_stmt + call_stmt, call
 
     def _translate_slice_subscript(self, node: ast.Subscript, target: Expr,
                                    target_type: PythonType,

@@ -74,6 +74,7 @@ def parse_sil_file(sil_path: str, jvm, float_option: str = None):
     parse_result.initProperties()
     resolver = jvm.viper.silver.parser.Resolver(parse_result)
     resolved = resolver.run()
+    print(resolver.messages())
     resolved = resolved.get()
     translator = jvm.viper.silver.parser.Translator(resolved)
     # Reset messages in global Consistency object. Otherwise, left-over

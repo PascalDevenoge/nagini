@@ -26,7 +26,7 @@ class TypeDomainFactory:
     Creates domain functions and axioms that represent the Python/mypy type
     system within Viper.
     """
-    UNION_TYPE_SIZE = 4
+    UNION_TYPE_SIZE = 6
 
     def __init__(self, viper: ViperAST, translator: 'Translator') -> None:
         self.viper = viper

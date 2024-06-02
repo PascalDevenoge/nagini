@@ -985,6 +985,16 @@
             "args": ["__prim__int", "tuple", "tuple"],
             "type": "PSeq",
             "requires": ["PSeq___create__", "tuple___sil_seq__", "boxIntSeq", "__prim__int___box__"]
+        },
+        "validIndex": {
+            "args": ["__prim__int", "tuple", "tuple", "type"],
+            "type": "__prim__bool",
+            "requires": ["tuple___len__", "tuple___sil_seq__", "slice___start__", "slice___stop__"]
+        },
+        "numRemainingElements": {
+            "args": ["__prim__int", "tuple", "type"],
+            "type": "__prim__int",
+            "requires": ["tuple___sil_seq__"]
         }
     },
     "methods": {

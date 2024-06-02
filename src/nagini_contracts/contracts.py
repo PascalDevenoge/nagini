@@ -515,6 +515,12 @@ def seqProduct(i: int, t: Tuple[int, ...]) -> int:
 def filterSeq(i: int, s: Tuple[T, ...], drop: Tuple[int, ...]) -> PSeq[T]:
     pass
 
+def validIndex(i: int, idx: Tuple[Union[int, slice, T], ...], shape: Tuple[int, ...], newAxisType: Type[T]) -> bool:
+    pass
+
+def numRemainingElements(i: int, idx: Tuple[Union[int, slice, T], ...], newAxisType: Type[T]) -> int:
+    pass
+
 __all__ = [
         'Requires',
         'Ensures',
@@ -571,4 +577,6 @@ __all__ = [
         'isNaN',
         'seqProduct',
         'filterSeq',
+        'validIndex',
+        'numRemainingElements'
         ]
