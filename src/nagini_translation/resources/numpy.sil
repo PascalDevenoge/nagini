@@ -16,8 +16,31 @@ domain Nat {
 
 domain _NumpyHelper {
   function __seqProduct(n: Nat, s: Seq[Int]): Int
-  function __filterSeq(n: Nat, s: Seq[Ref], idx: Seq[Ref], drop: Seq[Ref]): Seq[Ref]
   function __dropType(n: Nat, s: Seq[Ref], dropType: PyType): Seq[Ref]
+  function __max(a: Int, b: Int): Int
+  function __sliceIndices(n: Nat, idx: Seq[Ref], newAxisType: PyType, shapeIdx: Seq[Int]): Seq[Int]
+
+  axiom sliceIndices {
+    forall n: Nat, idx: Seq[Ref], newAxisType: PyType, shapeIdx: Seq[Int] :: {__sliceIndices(S(n), idx, newAxisType, shapeIdx)}
+      ((issubtype(typeof(idx[0]), int())) ==> (__sliceIndices(S(n), idx, newAxisType, shapeIdx) == __sliceIndices(n, idx[1..], newAxisType, shapeIdx[1..]))) &&
+      ((issubtype(typeof(idx[0]), newAxisType)) ==> (__sliceIndices(S(n), idx, newAxisType, shapeIdx) == Seq(0) ++ __sliceIndices(n, idx[1..], newAxisType, shapeIdx))) &&
+      ((issubtype(typeof(idx[0]), slice())) ==> (__sliceIndices(S(n), idx, newAxisType, shapeIdx) == Seq(shapeIdx[0]) ++ __sliceIndices(n, idx[1..], newAxisType, shapeIdx[1..])))
+  }
+
+  axiom baseSliceIndex {
+    forall n: Nat, idx: Seq[Ref], newAxisType: PyType, shapeIdx: Seq[Int] :: {__sliceIndices(n, idx, newAxisType, shapeIdx)}
+      (|idx| == 0 || |shapeIdx| == 0) ==> __sliceIndices(n, idx, newAxisType, shapeIdx) == Seq[Int]()
+  }
+
+  axiom notNegativeSliceIndex {
+    forall i: Int, n: Nat, idx: Seq[Ref], newAxisType: PyType, shapeIdx: Seq[Int] :: {__sliceIndices(n, idx, newAxisType, shapeIdx)[i]}
+      (i >= 0 && i < |__sliceIndices(n, idx, newAxisType, shapeIdx)|) ==> (__sliceIndices(n, idx, newAxisType, shapeIdx)[i] >= 0)
+  }
+
+  axiom indicesInBoundsSliceIndex {
+    forall i: Int, n: Nat, idx: Seq[Ref], newAxisType: PyType, shapeIdx: Seq[Int] :: {__sliceIndices(n, idx, newAxisType, shapeIdx)[i]}
+      (i >= 0 && i < |__sliceIndices(n, idx, newAxisType, shapeIdx)|) ==> (__sliceIndices(n, idx, newAxisType, shapeIdx)[i] < |shapeIdx|)
+  }
 
   axiom seqProduct {
     forall n: Nat, s: Seq[Int] :: {__seqProduct(S(n), s)}
@@ -29,24 +52,10 @@ domain _NumpyHelper {
       |s| == 0 ==> __seqProduct(n, s) == 1 
   }
 
-  axiom filterSeq {
-    forall n: Nat, s: Seq[Ref], idx: Seq[Ref], drop: Seq[Ref] :: {__filterSeq(S(n), s, idx, drop)}
-      __filterSeq(S(n), s, idx, drop) == (
-        idx[0] in drop ?
-          __filterSeq(n, s[1..], idx[1..], drop) :
-          Seq(s[0]) ++ __filterSeq(n, s[1..], idx[1..], drop)
-       )
-  }
-
-  axiom baseFilterSeq {
-    forall n: Nat, s: Seq[Ref], idx: Seq[Ref], drop: Seq[Ref] :: {__filterSeq(n, s, idx, drop)}
-      (|s| == 0 || |idx| == 0) ==> __filterSeq(n, s, idx, drop) == Seq[Ref]()
-  }
-
   axiom dropType {
     forall n: Nat, s: Seq[Ref], dropType: PyType :: {__dropType(S(n), s, dropType)}
       __dropType(S(n), s, dropType) == (
-        typeof(s[0]) == dropType ?
+        issubtype(typeof(s[0]), dropType) ?
           __dropType(n, s[1..], dropType) :
           Seq(s[0]) ++ __dropType(n, s[1..], dropType)
       )
@@ -57,9 +66,9 @@ domain _NumpyHelper {
       (|s| == 0) ==> __dropType(n, s, dropType) == Seq[Ref]()
   }
 
-  axiom lenDropType {
-    forall n: Nat, s: Seq[Ref], dropType: PyType :: {|__dropType(n, s, dropType)|}
-      |__dropType(n, s, dropType)| <= |s|
+  axiom max {
+    forall a: Int, b: Int :: {__max(a, b)}
+      __max(a, b) == ((a > b) ? a : b)
   }
 }
 
@@ -74,33 +83,50 @@ function intTupleToSeq(t: Ref): Seq[Int]
   ensures |result| == tuple___len__(t)
   ensures forall i: Int :: {result[i]} i >= 0 && i < tuple___len__(t) ==> result[i] == int___unbox__(tuple___getitem__(t, i))
 
-function filterSeq(i: Int, s: Ref, drop: Ref): Ref
-  decreases _
-  requires forall id: Int :: id >= 0 && id < tuple___len__(drop) ==> issubtype(tuple_arg(typeof(drop), id), int())
-  ensures result == PSeq___create__(__filterSeq(fromInt(i), tuple___sil_seq__(s), boxIntSeq([0..i)), tuple___sil_seq__(drop)), int())
-
-function boxIntSeq(s: Seq[Int]): Seq[Ref]
-  decreases _
-  ensures |result| == |s|
-  ensures forall i: Int :: {result[i]} i in [0..|s|) ==> result[i] == __prim__int___box__(s[i])
-
 function validIndex(i: Int, idx: Ref, shape: Ref, newAxisType: PyType): Bool
   decreases _
-  requires forall j: Int :: {typeof(tuple___sil_seq__(shape)[j])}
-    j >= 0 && j < |tuple___sil_seq__(shape)| ==> issubtype(typeof(tuple___sil_seq__(shape)[j]), int())
+  requires forall j: Int :: {tuple___getitem__(shape, j)}
+    (j >= 0 && j < tuple___len__(shape)) ==> issubtype(tuple_arg(typeof(shape), j), int())
+
   ensures result == (
-      forall j: Int :: (j >= 0 && j < |__dropType(fromInt(i), tuple___sil_seq__(idx), newAxisType)|) && j < |tuple___sil_seq__(shape)| ==> 
-        typeof(__dropType(fromInt(i), tuple___sil_seq__(idx), newAxisType)[j]) == int() ? 
-          (j >= 0 && j < |__dropType(fromInt(i), tuple___sil_seq__(idx), newAxisType)| && j < |tuple___sil_seq__(shape)| && typeof(__dropType(fromInt(i), tuple___sil_seq__(idx), newAxisType)[j]) == int() ==>
-            int___unbox__(__dropType(fromInt(i), tuple___sil_seq__(idx), newAxisType)[j]) >= 0 &&
-            int___unbox__(__dropType(fromInt(i), tuple___sil_seq__(idx), newAxisType)[j]) < int___unbox__(tuple___sil_seq__(shape)[j])) :
-          (j >= 0 && j < |__dropType(fromInt(i), tuple___sil_seq__(idx), newAxisType)| && j < |tuple___sil_seq__(shape)| && typeof(__dropType(fromInt(i), tuple___sil_seq__(idx), newAxisType)[j]) == slice() ==>
-            slice___start__(__dropType(fromInt(i), tuple___sil_seq__(idx), newAxisType)[j], |tuple___sil_seq__(shape)|) == 0 &&
-            slice___start__(__dropType(fromInt(i), tuple___sil_seq__(idx), newAxisType)[j], |tuple___sil_seq__(shape)|) < int___unbox__(tuple___sil_seq__(shape)[j]) &&
-            slice___stop__(__dropType(fromInt(i), tuple___sil_seq__(idx), newAxisType)[j], |tuple___sil_seq__(shape)|) >= -int___unbox__(tuple___sil_seq__(shape)[j]) &&
-            slice___stop__(__dropType(fromInt(i), tuple___sil_seq__(idx), newAxisType)[j], |tuple___sil_seq__(shape)|) < int___unbox__(tuple___sil_seq__(shape)[j]))
+      forall j: Int :: (j >= 0 && j < |__dropType(fromInt(i), tuple___sil_seq__(idx), newAxisType)| && j < tuple___len__(shape)) ==> 
+        ((issubtype(typeof(__dropType(fromInt(i), tuple___sil_seq__(idx), newAxisType)[j]), int())) ? 
+            int___unbox__(__dropType(fromInt(i), tuple___sil_seq__(idx), newAxisType)[j]) >= -int___unbox__(tuple___getitem__(shape, j)) &&
+            int___unbox__(__dropType(fromInt(i), tuple___sil_seq__(idx), newAxisType)[j]) < int___unbox__(tuple___getitem__(shape, j)) :
+            slice___start__(__dropType(fromInt(i), tuple___sil_seq__(idx), newAxisType)[j], tuple___len__(shape)) >= 0 &&
+            slice___start__(__dropType(fromInt(i), tuple___sil_seq__(idx), newAxisType)[j], tuple___len__(shape)) <= int___unbox__(tuple___getitem__(shape, j)) &&
+            slice___stop__(__dropType(fromInt(i), tuple___sil_seq__(idx), newAxisType)[j], tuple___len__(shape)) >= 0 &&
+            slice___stop__(__dropType(fromInt(i), tuple___sil_seq__(idx), newAxisType)[j], tuple___len__(shape)) <= int___unbox__(tuple___getitem__(shape, j)))
   )
 
-  function numRemainingElements(i: Int, t: Ref, newAxisType: PyType): Int
-    decreases _
-    ensures result == |__dropType(fromInt(i), tuple___sil_seq__(t), newAxisType)|
+function numRemainingElements(i: Int, t: Ref, newAxisType: PyType): Int
+  decreases _
+  ensures result == |__dropType(fromInt(i), tuple___sil_seq__(t), newAxisType)|
+
+function indexedShape(i: Int, idx: Ref, shape: Ref, newAxisType: PyType): Ref
+  decreases _
+  requires forall j: Int :: {tuple___getitem__(shape, j)}
+    (j >= 0 && j < tuple___len__(shape)) ==> issubtype(tuple_arg(typeof(shape), j), int())
+
+  ensures result == PSeq___create__(indexedShapeSeq(i, idx, shape, newAxisType) ++ tuple___sil_seq__(shape)[|__dropType(fromInt(i), tuple___sil_seq__(idx), newAxisType)|..], int())
+
+function indexedShapeSeq(i: Int, idx: Ref, shape: Ref, newAxisType: PyType): Seq[Ref]
+  decreases _
+  requires forall j: Int :: {tuple___getitem__(shape, j)}
+    (j >= 0 && j < tuple___len__(shape)) ==> issubtype(tuple_arg(typeof(shape), j), int())
+
+  ensures |result| == |__dropType(fromInt(i), tuple___sil_seq__(idx), int())|
+  ensures forall j: Int :: {result[j]}
+    (
+      (j >= 0 && j < |__dropType(fromInt(i), tuple___sil_seq__(idx), int())| && j < |__sliceIndices(fromInt(i), tuple___sil_seq__(idx), newAxisType, [0..tuple___len__(shape)))| && j < |result|) ==>
+      (
+        ((issubtype(typeof(__dropType(fromInt(i), tuple___sil_seq__(idx), int())[j]), newAxisType)) ==> (result[j] == __prim__int___box__(1))) &&
+        ((issubtype(typeof(__dropType(fromInt(i), tuple___sil_seq__(idx), int())[j]), slice())) ==> (result[j] == 
+          __prim__int___box__(__max(
+            slice___stop__(__dropType(fromInt(i), tuple___sil_seq__(idx), int())[j], int___unbox__(tuple___getitem__(shape, __sliceIndices(fromInt(i), tuple___sil_seq__(idx), newAxisType,[0..tuple___len__(shape)))[j]))) -
+            slice___start__(__dropType(fromInt(i), tuple___sil_seq__(idx), int())[j], int___unbox__(tuple___getitem__(shape, __sliceIndices(fromInt(i), tuple___sil_seq__(idx), newAxisType,[0..tuple___len__(shape)))[j]))),
+            0
+          ))
+        ))
+      )
+    )

@@ -981,11 +981,6 @@
             "type": "__prim__int",
             "requires": ["intTupleToSeq", "tuple___len__", "tuple___getitem__", "int___unbox__"]
         },
-        "filterSeq": {
-            "args": ["__prim__int", "tuple", "tuple"],
-            "type": "PSeq",
-            "requires": ["PSeq___create__", "tuple___sil_seq__", "boxIntSeq", "__prim__int___box__"]
-        },
         "validIndex": {
             "args": ["__prim__int", "tuple", "tuple", "type"],
             "type": "__prim__bool",
@@ -995,6 +990,11 @@
             "args": ["__prim__int", "tuple", "type"],
             "type": "__prim__int",
             "requires": ["tuple___sil_seq__"]
+        },
+        "indexedShape": {
+            "args": ["__prim__int", "tuple", "tuple", "type"],
+            "type": "PSeq",
+            "requires": ["indexedShapeSeq", "tuple___sil_seq__", "__prim__int___box__", "PSeq___create__", "slice___start__", "slice___stop__"]
         }
     },
     "methods": {

@@ -512,13 +512,13 @@ def isNaN(f: float) -> bool:
 def seqProduct(i: int, t: Tuple[int, ...]) -> int:
     pass
 
-def filterSeq(i: int, s: Tuple[T, ...], drop: Tuple[int, ...]) -> PSeq[T]:
-    pass
-
 def validIndex(i: int, idx: Tuple[Union[int, slice, T], ...], shape: Tuple[int, ...], newAxisType: Type[T]) -> bool:
     pass
 
 def numRemainingElements(i: int, idx: Tuple[Union[int, slice, T], ...], newAxisType: Type[T]) -> int:
+    pass
+
+def indexedShape(i: int, idx: Tuple[Union[int, slice, T], ...], shape: Tuple[int, ...], newAxisType: Type[T]) -> PSeq[int]:
     pass
 
 __all__ = [
@@ -576,7 +576,7 @@ __all__ = [
         'MayCreate',
         'isNaN',
         'seqProduct',
-        'filterSeq',
         'validIndex',
-        'numRemainingElements'
+        'numRemainingElements',
+        'indexedShape'
         ]
