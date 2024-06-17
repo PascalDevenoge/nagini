@@ -509,16 +509,16 @@ def dict_pred(d: object) -> bool:
 def isNaN(f: float) -> bool:
     pass
 
-def seqProduct(i: int, t: Tuple[int, ...]) -> int:
+def numRemainingElements(idx: Tuple[Union[int, slice, T], ...], newAxisObj: T) -> int:
     pass
 
-def validIndex(i: int, idx: Tuple[Union[int, slice, T], ...], shape: Tuple[int, ...], newAxisType: Type[T]) -> bool:
+def validIndex(idx: Tuple[Union[int, slice, T], ...], shape: Tuple[int, ...], newAxisObject: T) -> bool:
     pass
 
-def numRemainingElements(i: int, idx: Tuple[Union[int, slice, T], ...], newAxisType: Type[T]) -> int:
+def indexedShape(idx: Tuple[Union[int, slice, T], ...], shape: Tuple[int, ...], newAxisObject: T) -> PSeq[int]:
     pass
 
-def indexedShape(i: int, idx: Tuple[Union[int, slice, T], ...], shape: Tuple[int, ...], newAxisType: Type[T]) -> PSeq[int]:
+def seqProduct(t: Tuple[int, ...]) -> int:
     pass
 
 __all__ = [
@@ -575,8 +575,8 @@ __all__ = [
         'MaySet',
         'MayCreate',
         'isNaN',
-        'seqProduct',
-        'validIndex',
         'numRemainingElements',
-        'indexedShape'
+        'validIndex',
+        'indexedShape',
+        'seqProduct',
         ]

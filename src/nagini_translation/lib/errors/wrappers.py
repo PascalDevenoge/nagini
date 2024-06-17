@@ -91,7 +91,7 @@ class Reason:
                 return VAGUE_REASONS[self.identifier]
             else:
                 return self._reason.readableMessage()
-        return REASONS[self.identifier](reason)
+        return REASONS[self.identifier](reason) if self.identifier in REASONS else self.identifier
 
 
 class Error:

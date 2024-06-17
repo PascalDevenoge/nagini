@@ -976,25 +976,25 @@
             "type": "__prim__int",
             "requires": ["__seq_ref_to_seq_int", "int___unbox__", "__prim__int___box__", "list___getitem__"]
         },
-        "seqProduct": {
-            "args": ["__prim__int", "tuple"],
+        "numRemainingElements": {
+            "args": ["tuple", "object"],
             "type": "__prim__int",
-            "requires": ["intTupleToSeq", "tuple___len__", "tuple___getitem__", "int___unbox__"]
+            "requires": ["tuple___sil_seq__", "tuple___len__"]
         },
         "validIndex": {
-            "args": ["__prim__int", "tuple", "tuple", "type"],
+            "args": ["tuple", "tuple", "object"],
             "type": "__prim__bool",
-            "requires": ["tuple___len__", "tuple___sil_seq__", "slice___start__", "slice___stop__"]
-        },
-        "numRemainingElements": {
-            "args": ["__prim__int", "tuple", "type"],
-            "type": "__prim__int",
-            "requires": ["tuple___sil_seq__"]
+            "requires": ["tuple___sil_seq__", "tuple___len__", "intSeqUnbox", "getMinIndices", "getMaxIndices", "int___unbox__", "slice___start__", "slice___stop__", "tuple___getitem__"]
         },
         "indexedShape": {
-            "args": ["__prim__int", "tuple", "tuple", "type"],
+            "args": ["tuple", "tuple", "object"],
             "type": "PSeq",
-            "requires": ["indexedShapeSeq", "tuple___sil_seq__", "__prim__int___box__", "PSeq___create__", "slice___start__", "slice___stop__"]
+            "requires": ["tuple___len__", "tuple___getitem__", "PSeq___create__", "intSeqBox", "__prim__int___box__", "tuple___sil_seq__", "intSeqUnbox", "getMinIndices", "getMaxIndices", "int___unbox__", "slice___start__", "slice___stop__"]
+        },
+        "seqProduct": {
+            "args": ["tuple"],
+            "type": "__prim__int",
+            "requires": ["tuple___getitem__", "tuple___len__", "intSeqUnbox"]
         }
     },
     "methods": {
